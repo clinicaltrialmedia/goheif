@@ -348,7 +348,7 @@ void generate_inter_prediction_samples(base_context* ctx,
 
       logtrace(LogMotion, "refIdx: %d -> dpb[%d]\n", vi->refIdx[l], shdr->RefPicList[l][vi->refIdx[l]]);
 
-      if (refPic->PicState == UnusedForReference) {
+      if (!refPic || refPic->PicState == UnusedForReference) {
         img->integrity = INTEGRITY_DECODING_ERRORS;
         ctx->add_warning(DE265_WARNING_NONEXISTING_REFERENCE_PICTURE_ACCESSED, false);
 
@@ -376,7 +376,7 @@ void generate_inter_prediction_samples(base_context* ctx,
                   refPic->get_luma_stride(), nPbW,nPbH, bit_depth_L);
         }
 
-        if (img->high_bit_depth(0)) {
+        if (img->high_bit_depth(1)) {
           mc_chroma(ctx, sps, vi->mv[l].x, vi->mv[l].y, xP,yP,
                     predSamplesC[0][l],nCS, (const uint16_t*)refPic->get_image_plane(1),
                     refPic->get_chroma_stride(), nPbW/SubWidthC,nPbH/SubHeightC, bit_depth_C);
