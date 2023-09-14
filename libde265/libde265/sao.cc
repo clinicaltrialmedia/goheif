@@ -211,11 +211,14 @@ void apply_sao_internal(de265_image* img, int xCtb,int yCtb,
             continue;
           }
 
-          int bandIdx = bandTable[ in_img[xC+i+(yC+j)*in_stride]>>bandShift ];
-
           // Shifts are a strange thing. On x86, >>x actually computes >>(x%64).
           // So we have to take care of large bandShifts.
-          if (bandShift>=8) { bandIdx=0; }
+          int bandIdx;
+          if (bandShift >= 8) {
+            bandIdx = 0;
+          } else {
+            bandIdx = bandTable[ in_img[xC+i+(yC+j)*in_stride]>>bandShift ];
+          }
 
           if (bandIdx>0) {
             int offset = saoinfo->saoOffsetVal[cIdx][bandIdx-1];
@@ -237,10 +240,13 @@ void apply_sao_internal(de265_image* img, int xCtb,int yCtb,
         for (int j=0;j<ctbH;j++)
           for (int i=0;i<ctbW;i++) {
 
-            int bandIdx = bandTable[ in_img[xC+i+(yC+j)*in_stride]>>bandShift ];
-
             // see above
-            if (bandShift>=8) { bandIdx=0; }
+            int bandIdx;
+            if (bandShift >= 8) {
+              bandIdx = 0;
+            } else {
+              bandIdx = bandTable[ in_img[xC+i+(yC+j)*in_stride]>>bandShift ];
+            }
 
             if (bandIdx>0) {
               int offset = saoinfo->saoOffsetVal[cIdx][bandIdx-1];
@@ -347,7 +353,10 @@ void apply_sample_adaptive_offset_sequential(de265_image* img)
       for (int xCtb=0; xCtb<sps.PicWidthInCtbsY; xCtb++)
         {
           const slice_segment_header* shdr = img->get_SliceHeaderCtb(xCtb,yCtb);
-          if (shdr==NULL) { return; }
+          if (shdr==NULL) {
+	    delete[] inputCopy;
+	    return;
+	  }
 
           if (cIdx==0 && shdr->slice_sao_luma_flag) {
             apply_sao(img, xCtb,yCtb, shdr, 0, 1<<sps.Log2CtbSizeY, 1<<sps.Log2CtbSizeY,
@@ -387,7 +396,7 @@ public:
   virtual void work();
   virtual std::string name() const {
     char buf[100];
-    sprintf(buf,"sao-%d",ctb_y);
+    snprintf(buf,sizeof(buf),"sao-%d",ctb_y);
     return buf;
   }
 };
